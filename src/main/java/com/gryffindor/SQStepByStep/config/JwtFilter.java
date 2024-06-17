@@ -17,18 +17,25 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     JwtService jwtService;
-
+    @Autowired
+    private WhiteListConfig whiteListConfig;
     @Autowired
     ApplicationContext context;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
+        String uri = request.getRequestURI();
+        if(Arrays.asList(whiteListConfig.getWhiteListUrls()).contains(uri)){
+            filterChain.doFilter(request, response);
+            return;
+        }
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String userName = null;

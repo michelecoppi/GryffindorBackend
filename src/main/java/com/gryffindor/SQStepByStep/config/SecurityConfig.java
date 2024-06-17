@@ -21,7 +21,8 @@ public class SecurityConfig {
 
 	@Autowired
 	private UserDetailsService userDetailsService;
-
+	@Autowired
+	private WhiteListConfig whiteListConfig;
 	@Autowired
 	private JwtFilter jwtFilter;
 	
@@ -39,7 +40,7 @@ public class SecurityConfig {
 
 		http.csrf(customizer -> customizer.disable())
 				.authorizeHttpRequests(request -> request
-						.requestMatchers("register", "login")
+						.requestMatchers(whiteListConfig.getWhiteListUrls())
 						.permitAll()
 						.anyRequest().authenticated())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
