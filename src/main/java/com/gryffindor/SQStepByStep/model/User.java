@@ -42,10 +42,25 @@ public class User {
 
 
 
-    //TODO ricorda nel DTO di trasformare eachCigPrice in STRINGA!!!!
+//TODO ricorda nel DTO di trasformare eachCigPrice in STRINGA!!!!
 
     public User(){}
 
+    public User(int id, String username, String firstname, String lastname, String email, String password, int age, char gender, LocalDate subscriptionDate, boolean stillSmoker, int startingDailyCigNums, BigDecimal eachCigPrice, int dailyCigNum) {
+        this.id = id;
+        this.username = username;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.email = email;
+        this.password = password;
+        this.age = age;
+        this.gender = gender;
+        this.subscriptionDate = subscriptionDate;
+        this.stillSmoker = stillSmoker;
+        this.startingDailyCigNums = startingDailyCigNums;
+        this.eachCigPrice = eachCigPrice;
+        this.dailyCigNum = dailyCigNum;
+    }
 
     public int decrementDailyCigNum() {
         this.dailyCigNum--;
@@ -80,6 +95,33 @@ public class User {
         return subscriptionDate;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public char getGender() {
+        return gender;
+    }
+
+    public boolean isStillSmoker() {
+        return stillSmoker;
+    }
+
+    public int getDailyCigNum() {
+        return dailyCigNum;
+    }
 
     public int getStartingDailyCigNums() {
         return startingDailyCigNums;

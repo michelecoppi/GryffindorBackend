@@ -1,14 +1,14 @@
 package com.gryffindor.SQStepByStep.model.service.implementation;
 
 import com.gryffindor.SQStepByStep.model.User;
-import com.gryffindor.SQStepByStep.model.service.abstraction.UserService;
+import com.gryffindor.SQStepByStep.model.service.abstraction.AbstractUserService;
 import com.gryffindor.SQStepByStep.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements AbstractUserService {
     private final UserRepo userRepo;
 
     @Autowired

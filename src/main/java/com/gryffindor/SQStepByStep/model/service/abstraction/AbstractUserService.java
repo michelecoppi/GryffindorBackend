@@ -1,12 +1,11 @@
 package com.gryffindor.SQStepByStep.model.service.abstraction;
 
 import com.gryffindor.SQStepByStep.model.User;
-import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 
-public interface UserService {
+public interface AbstractUserService {
     //CREATE
     User createUser(User user);
     //READ

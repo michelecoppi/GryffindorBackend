@@ -6,7 +6,7 @@ import com.gryffindor.SQStepByStep.model.Cigarette;
 import com.gryffindor.SQStepByStep.model.Timer;
 import com.gryffindor.SQStepByStep.model.User;
 import com.gryffindor.SQStepByStep.model.service.abstraction.HistoryService;
-import com.gryffindor.SQStepByStep.model.service.abstraction.UserService;
+import com.gryffindor.SQStepByStep.model.service.abstraction.AbstractUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +23,10 @@ import java.util.Optional;
 @RequestMapping("/planning")
 public class PlanningController {
     private final HistoryService historyService;
-    private final UserService userService;
+    private final AbstractUserService userService;
 
     @Autowired
-    public PlanningController(HistoryService historyService, UserService userService) {
+    public PlanningController(HistoryService historyService, AbstractUserService userService) {
         this.historyService = historyService;
         this.userService = userService;
     }
@@ -80,7 +80,7 @@ public class PlanningController {
         return ResponseEntity.ok(new TimerDto(t));
     }
 
-    @GetMapping("/users/{id}/saving")
+    @GetMapping("/users/{id}/savings")
     public ResponseEntity<BigDecimal> calculateSaving(@PathVariable("id") int userId) {
         Optional<User> user = userService.getUserById(userId);
         if (user.isEmpty()) {
