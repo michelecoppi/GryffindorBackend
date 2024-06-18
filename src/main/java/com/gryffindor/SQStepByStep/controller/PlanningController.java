@@ -5,11 +5,14 @@ import com.gryffindor.SQStepByStep.dto.TimerDto;
 import com.gryffindor.SQStepByStep.model.Cigarette;
 import com.gryffindor.SQStepByStep.model.Timer;
 import com.gryffindor.SQStepByStep.model.User;
+import com.gryffindor.SQStepByStep.model.UserPrincipal;
 import com.gryffindor.SQStepByStep.model.service.abstraction.HistoryService;
 import com.gryffindor.SQStepByStep.model.service.abstraction.AbstractUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -31,27 +34,49 @@ public class PlanningController {
         this.userService = userService;
     }
 
+    @GetMapping("/users/activetimer")
+    public ResponseEntity<?> getActiveTimerForLoggedUser(@AuthenticationPrincipal UserPrincipal userDetails) {
+     return getLatestTimerByUserId(userDetails.getUser().getId());
+    }
+//ONLY FOR TESTS
     @GetMapping("/users/{id}/activetimer")
-    public ResponseEntity<TimerDto> getActiveTimer(@PathVariable("id") int userId) {
+    public ResponseEntity<?> getActiveTimerByUserId(@PathVariable("id") int userId) {
+       return getLatestTimerByUserId(userId);
+    }
+
+    private ResponseEntity<?> getLatestTimerByUserId(int userId){
         Optional<User> user = userService.getUserById(userId);
         if (user.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esiste un utente con questo id "+userId);
         }
         Optional<Timer> latestTimer = historyService.getLatestTimerByUser(user.get());
-        return latestTimer.map(timer -> ResponseEntity.ok(new TimerDto(timer)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NO_CONTENT).build());
+        if(latestTimer.isPresent()){
+            return ResponseEntity.ok(new TimerDto(latestTimer.get()));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esistono sigarette per questo utente");
     }
 
 
+    @GetMapping("/users/activecigarette")
+    public ResponseEntity<?> getActiveCigaretteForLoggedUser(@AuthenticationPrincipal UserPrincipal userDetails) {
+        return getLatestCigaretteByUserId(userDetails.getUser().getId());
+    }
+//ONLY FOR TESTS
     @GetMapping("/users/{id}/activecigarette")
-    public ResponseEntity<CigaretteDto> getActiveCigarette(@PathVariable("id") int userId) {
+    public ResponseEntity<?> getActiveCigaretteByUserId( @PathVariable("id") int userId) {
+        return getLatestCigaretteByUserId(userId);
+    }
+
+    private ResponseEntity<?> getLatestCigaretteByUserId(int userId){
         Optional<User> user = userService.getUserById(userId);
         if (user.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esiste un utente con questo id "+userId);
         }
         Optional<Cigarette> latestCigarette = historyService.getLatestCigaretteByUser(user.get());
-        return latestCigarette.map(cigarette -> ResponseEntity.ok(new CigaretteDto(cigarette)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NO_CONTENT).build());
+        if(latestCigarette.isPresent()){
+            return ResponseEntity.ok(new CigaretteDto(latestCigarette.get()));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esistono sigarette per questo utente");
     }
 
     @PostMapping("/users/{id}/cigarette")
@@ -80,11 +105,21 @@ public class PlanningController {
         return ResponseEntity.ok(new TimerDto(t));
     }
 
+    @GetMapping("/users/savings")
+    public ResponseEntity<?> calculateSavingsForLoggedUser(@AuthenticationPrincipal UserPrincipal userDetails) {
+        return getSavingsByUserId(userDetails.getUser().getId());
+    }
+
+//ONLY FOR TESTS
     @GetMapping("/users/{id}/savings")
-    public ResponseEntity<BigDecimal> calculateSaving(@PathVariable("id") int userId) {
+    public ResponseEntity<?> calculateSavingsByUserId(@PathVariable("id") int userId) {
+        return getSavingsByUserId(userId);
+    }
+
+    private ResponseEntity<?> getSavingsByUserId (int userId){
         Optional<User> user = userService.getUserById(userId);
         if (user.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esiste un utente con questo id "+userId);
         }
         int countCigarette = 0;
         List<Cigarette> userCigarette = user.get().getCigs();
@@ -99,8 +134,5 @@ public class PlanningController {
         BigDecimal saving = user.get().getEachCigPrice().multiply(BigDecimal.valueOf(theoreticalCigarettes - countCigarette));
         return ResponseEntity.ok(saving);
     }
-
-
-
 
 }
