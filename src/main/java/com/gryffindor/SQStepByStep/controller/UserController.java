@@ -4,7 +4,9 @@ package com.gryffindor.SQStepByStep.controller;
 import com.gryffindor.SQStepByStep.dto.LoginDto;
 import com.gryffindor.SQStepByStep.dto.TokenResponseDto;
 import com.gryffindor.SQStepByStep.dto.UserDto;
+import com.gryffindor.SQStepByStep.model.Timer;
 import com.gryffindor.SQStepByStep.model.User;
+import com.gryffindor.SQStepByStep.model.service.abstraction.HistoryService;
 import com.gryffindor.SQStepByStep.model.service.implementation.JwtService;
 import com.gryffindor.SQStepByStep.model.service.implementation.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,19 +22,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class UserController {
 
-	@Autowired
-	private UserService service;
+
+	private final UserService userService;
+	private final HistoryService historyService;
+
+	private final JwtService jwtService;
+	private final AuthenticationManager authenticationManager;
 
 	@Autowired
-	private JwtService jwtService;
-
-	@Autowired
-	AuthenticationManager authenticationManager;
+	public UserController(UserService userService, HistoryService historyService, JwtService jwtService, AuthenticationManager authenticationManager){
+		this.userService = userService;
+		this.historyService = historyService;
+		this.jwtService = jwtService;
+		this.authenticationManager = authenticationManager;
+	}
 	
 	@PostMapping("register")
 	public ResponseEntity<UserDto> register(@RequestBody UserDto userDto) {
-		User saved = service.saveUser(userDto.toUser());
+		User saved = userService.saveUser(userDto.toUser());
 		UserDto savedDto = new UserDto(saved);
+		int duration = (16 * 60) / (saved.getStartingDailyCigNums() - 1);
+		historyService.createTimer(new Timer(saved.getSubscriptionDate(),saved.getSubscriptionDate().plusMonths(1), duration,saved));
 		return ResponseEntity.ok(savedDto);
 	}
 

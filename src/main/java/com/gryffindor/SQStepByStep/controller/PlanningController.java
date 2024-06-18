@@ -53,7 +53,7 @@ public class PlanningController {
         if(latestTimer.isPresent()){
             return ResponseEntity.ok(new TimerDto(latestTimer.get()));
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esistono sigarette per questo utente");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esistono timer per questo utente");
     }
 
 
@@ -76,33 +76,7 @@ public class PlanningController {
         if(latestCigarette.isPresent()){
             return ResponseEntity.ok(new CigaretteDto(latestCigarette.get()));
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esistono sigarette per questo utente");
-    }
-
-    @PostMapping("/users/{id}/cigarette")
-    public ResponseEntity<CigaretteDto> createCigarette(@RequestBody CigaretteDto dto, @PathVariable("id") int userId) {
-        //controllo id query string == id dentro dto
-        Optional<User> user = userService.getUserById(dto.getUserId());
-        if (user.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Cigarette c = dto.toCigarette(user.get());
-        historyService.createCigarette(c);
-        return ResponseEntity.ok(new CigaretteDto(c));
-    }
-
-    @PostMapping("/users/{id}/timer")
-    public ResponseEntity<TimerDto> createTimer(@RequestBody TimerDto dto, @PathVariable("id") int userId) {
-        //controllo id query string == id dentro dto
-        Optional<User> user = userService.getUserById(userId);
-        if (user.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        int duration = (16 * 60) / (user.get().decrementDailyCigNum() - 1);
-        LocalDate localDate = LocalDate.parse(dto.getStartDate());
-        Timer t = new Timer(localDate, localDate.plusMonths(1), duration, user.get());
-        historyService.createTimer(t);
-        return ResponseEntity.ok(new TimerDto(t));
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/users/savings")
@@ -119,7 +93,7 @@ public class PlanningController {
     private ResponseEntity<?> getSavingsByUserId (int userId){
         Optional<User> user = userService.getUserById(userId);
         if (user.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esiste un utente con questo id "+userId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esiste un utente con questo id " + userId);
         }
         int countCigarette = 0;
         List<Cigarette> userCigarette = user.get().getCigs();
@@ -133,6 +107,50 @@ public class PlanningController {
         int theoreticalCigarettes = registeredDays*user.get().getStartingDailyCigNums();
         BigDecimal saving = user.get().getEachCigPrice().multiply(BigDecimal.valueOf(theoreticalCigarettes - countCigarette));
         return ResponseEntity.ok(saving);
+    }
+
+
+    @PostMapping("/users/cigarette")
+    public ResponseEntity<?> createCigaretteForLoggedUser(@AuthenticationPrincipal UserPrincipal userDetails, @RequestBody CigaretteDto dto) {
+        return createCigaretteByUserId(userDetails.getUser().getId(),dto);
+    }
+    //ONLY FOR TESTS
+    @PostMapping("/users/{id}/cigarette")
+    public ResponseEntity<?> createCigaretteByUserId(@RequestBody CigaretteDto dto, @PathVariable("id") int userId) {
+     return createCigaretteByUserId(userId,dto);
+    }
+
+    private ResponseEntity<?> createCigaretteByUserId(int userId, CigaretteDto dto){
+        Optional<User> user = userService.getUserById(userId);
+        if (user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esiste un utente con questo id " + userId);
+        }
+        Cigarette c = dto.toCigarette(user.get());
+        historyService.createCigarette(c);
+        return ResponseEntity.ok(new CigaretteDto(c));
+    }
+
+    @PostMapping("/users/timer")
+    public ResponseEntity<?> createTimerForLoggedUser(@AuthenticationPrincipal UserPrincipal userDetails, @RequestBody TimerDto dto) {
+        return createTimerByUserId(userDetails.getUser().getId(),dto);
+    }
+
+    // ONLY FOR TESTS
+    @PostMapping("/users/{id}/timer")
+    public ResponseEntity<?> createTimerByUserId(@RequestBody TimerDto dto, @PathVariable("id") int userId) {
+        return createTimerByUserId(userId,dto);
+    }
+
+    private ResponseEntity<?> createTimerByUserId(int userId, TimerDto dto){
+        Optional<User> user = userService.getUserById(userId);
+        if (user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esiste un utente con questo id " + userId);
+        }
+        int duration = (16 * 60) / (user.get().decrementDailyCigNum() - 1);
+        LocalDate localDate = LocalDate.parse(dto.getStartDate());
+        Timer t = new Timer(localDate, localDate.plusMonths(1), duration, user.get());
+        historyService.createTimer(t);
+        return ResponseEntity.ok(new TimerDto(t));
     }
 
 }
