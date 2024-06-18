@@ -95,15 +95,19 @@ public class PlanningController {
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Non esiste un utente con questo id " + userId);
         }
+        LocalDateTime today = LocalDate.now().atStartOfDay();
+        LocalDateTime secondSubscriptionDate = user.get().getSubscriptionDate().plusDays(1).atStartOfDay();
+        if(today.isBefore(secondSubscriptionDate)) {
+            return ResponseEntity.ok(0);
+        }
         int countCigarette = 0;
         List<Cigarette> userCigarette = user.get().getCigs();
-        LocalDateTime today = LocalDate.now().atStartOfDay();
         for (Cigarette cigarette : userCigarette) {
-            if(cigarette.getDateTime().isBefore(today)){
+            if(cigarette.getDateTime().isBefore(today) && cigarette.getDateTime().isAfter(secondSubscriptionDate)){
                 countCigarette++;
             }
         }
-        int registeredDays = (int)ChronoUnit.DAYS.between(user.get().getSubscriptionDate(), today);
+        int registeredDays = (int)ChronoUnit.DAYS.between(secondSubscriptionDate, today);
         int theoreticalCigarettes = registeredDays*user.get().getStartingDailyCigNums();
         BigDecimal saving = user.get().getEachCigPrice().multiply(BigDecimal.valueOf(theoreticalCigarettes - countCigarette));
         return ResponseEntity.ok(saving);
